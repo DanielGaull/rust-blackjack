@@ -1,10 +1,9 @@
-use std::io::{stdin, stdout, Write};
-
-use card::{Deck, Hand};
+use card::{Deck, Hand, HandResult, Points};
 use mov::Move;
 
 mod card;
 mod mov;
+mod blackjack;
 
 fn main() {
     let mut deck: Deck = Deck::new(6);
@@ -40,10 +39,9 @@ fn play_turn(deck: &mut Deck) -> i32 {
     player_hand.add_card(deck.draw_card());
     dealer_hand.add_card(deck.draw_card());
 
-    let mut player_hand_pts = player_hand.calculate_points(false);
+    let player_hand_pts = player_hand.calculate_points(false);
     // Used to check if dealer has blackjack
     let true_dealer_hand_pts = dealer_hand.calculate_points(false);
-    let dealer_hand_pts = dealer_hand.calculate_points(true);
 
     if true_dealer_hand_pts.calculate_best_value() == 21 && player_hand_pts.calculate_best_value() != 21 {
         println!("Dealer blackjack!");
@@ -55,63 +53,7 @@ fn play_turn(deck: &mut Deck) -> i32 {
         return 1;
     }
 
-    loop {
-        println!("Your hand: {} ({})", player_hand.to_string(false), player_hand_pts.to_string());
-        println!("Dealer's hand: {} ({})", dealer_hand.to_string(true), dealer_hand_pts.to_string());
+    
 
-        let mov = get_move();
-        match mov {
-            Move::Hit => {
-                // Add another card to the player's hand
-                player_hand.add_card(deck.draw_card());
-                player_hand_pts = player_hand.calculate_points(false);
-                let best_player_hand_value = player_hand_pts.calculate_best_value();
-                if best_player_hand_value > 21 {
-                    println!("Bust!");
-                    return -1;
-                }
-            },
-            Move::Stand => {
-
-            },
-            _ => (),
-        }
-    }
-}
-
-fn play_hand() {
-
-}
-
-fn get_move() -> Move {
-    loop {
-        println!("H - hit, S - stand, D - double down, L - split");
-        println!("Enter your move: ");
-
-        let mov: char = read_input();
-        match mov {
-            's' => return Move::Stand,
-            'S' => return Move::Stand,
-            'h' => return Move::Hit,
-            'H' => return Move::Hit,
-            'd' => return Move::DoubleDown,
-            'D' => return Move::DoubleDown,
-            'l' => return Move::Split,
-            'L' => return Move::Split,
-            _ => println!("Not a valid move!"),
-        };
-    }
-}
-
-fn read_input() -> char {
-    let mut input = String::new();
-    let _ = stdout().flush();
-    stdin().read_line(&mut input).expect("Error reading in string input");
-    if let Some('\n') = input.chars().next_back() {
-        input.pop();
-    }
-    if let Some('\r') = input.chars().next_back() {
-        input.pop();
-    }
-    input.pop().expect("No text was entered")
+    return 0;
 }

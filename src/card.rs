@@ -3,7 +3,7 @@ use strum_macros::EnumIter;
 use rand::thread_rng;
 use rand::seq::SliceRandom;
 
-#[derive(Debug, EnumIter, Copy, Clone)]
+#[derive(Debug, EnumIter, Copy, Clone, PartialEq)]
 pub enum Card {
     Ace = 0,
     Two = 1,
@@ -150,6 +150,15 @@ impl Hand {
         str
     }
 
+    // Returns None if can't split, or the card if can split
+    pub fn split(&self) -> Option<Card> {
+        if self.cards.len() == 2 && self.cards[0] == self.cards[1] {
+            Some(self.cards[0])
+        } else {
+            None
+        }
+    }
+
 }
 
 pub struct Points {
@@ -201,4 +210,12 @@ impl Points {
             }
         }
     }
+}
+
+// Result of playing a hand; either a bust, the points the player ended up with, a split, or double
+pub enum HandResult {
+    Bust,
+    Points(Points),
+    Split(Card),
+    DoubleDown(Points),
 }
