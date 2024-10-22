@@ -134,6 +134,12 @@ pub fn play_hand(
     let dealer_hand_pts = dealer_hand.calculate_points(true);
     loop {
         let mut player_hand_pts = hand.calculate_points(false);
+
+        // Once a player reaches 21, their turn is over
+        if player_hand_pts.calculate_best_value() == 21 {
+            return HandResult::Points(player_hand_pts);
+        }
+
         println!("This hand: {} ({})", hand.to_string(false), player_hand_pts.to_string());
         println!("Dealer's hand: {} ({})", dealer_hand.to_string(true), dealer_hand_pts.to_string());
 
