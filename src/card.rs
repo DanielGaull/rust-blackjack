@@ -206,7 +206,10 @@ impl Points {
     }
 
     pub fn to_string(&self) -> String {
-        if self.has_op2 {
+        if self.has_op2 && self.op2 == 21 {
+            String::from("21")
+        }
+        else if self.has_op2 && self.op2 <= 21 {
             let mut str: String = String::new();
             str.push_str(self.op1.to_string().as_str());
             str.push('/');

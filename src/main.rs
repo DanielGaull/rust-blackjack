@@ -9,30 +9,18 @@ fn main() {
     let mut deck: Deck = Deck::new(6);
     deck.shuffle();
     println!("== Blackjack ==");
-    let mut user_points = 10;
-    println!("You have 10 hands. Each win grants you 1 hand, while a loss loses you 1 hand");
-    println!("If you lose all hands, you lose");
+    let mut credits: i32 = 0;
     loop {
+        println!("You have {} credits. Place Bet:", credits);
+        let credits_per: i32 = read_num();
+        let credit_res = play_turn(&mut deck, credits_per);
         println!("\n\n\n");
-        let points = play_turn(&mut deck);
-        user_points += points;
-        if user_points <= 0 {
-            println!("You lost everything");
-            break;
-        } else {
-            if user_points == 10 {
-                println!("You are even");
-            } else if user_points > 10 {
-                println!("You are up +{}", user_points - 10);
-            } else {
-                println!("You are down -{}", 10 - user_points);
-            }
-        }
+        credits += credit_res;
     }
 }
 
 // Returns number of hands to give the player
-fn play_turn(deck: &mut Deck) -> i32 {
+fn play_turn(deck: &mut Deck, credits_per: i32) -> i32 {
     let mut player_hand: Hand = Hand::new();
     let mut dealer_hand: Hand = Hand::new();
     player_hand.add_card(deck.draw_card());
@@ -46,12 +34,12 @@ fn play_turn(deck: &mut Deck) -> i32 {
 
     if true_dealer_hand_pts.calculate_best_value() == 21 && player_hand_pts.calculate_best_value() != 21 {
         println!("Dealer blackjack!");
-        return -1;
+        return -credits_per;
     }
     if player_hand_pts.calculate_best_value() == 21 {
         // Already checked for dealer blackjack
         println!("You got Blackjack!");
-        return 1;
+        return ((credits_per as f32) * 1.5) as i32;
     }
 
     let mut hands = VecDeque::<Hand>::new();
@@ -93,28 +81,23 @@ fn play_turn(deck: &mut Deck) -> i32 {
     for result in hand_results {
         match result {
             HandResult::Bust => {
-                println!("Bust");
                 num_credits -= 1;
             },
             HandResult::DoubleDown(pts) => {
                 if dealer_bust || pts.calculate_best_value() > dealer_pts {
-                    println!("Win double");
                     num_credits += 2;
                 } else if !dealer_bust && pts.calculate_best_value() == dealer_pts {
-                    println!("Push (on double)");
+                    println!("Push");
                 } else {
-                    println!("Lose double");
                     num_credits -= 2;
                 }
             },
             HandResult::Points(pts) => {
                 if dealer_bust || pts.calculate_best_value() > dealer_pts {
-                    println!("Win");
                     num_credits += 1;
                 } else if !dealer_bust && pts.calculate_best_value() == dealer_pts {
                     println!("Push");
                 } else {
-                    println!("Lose");
                     num_credits -= 1;
                 }
             },
@@ -123,7 +106,15 @@ fn play_turn(deck: &mut Deck) -> i32 {
         }
     }
 
-    return num_credits;
+    let change = num_credits * credits_per;
+
+    if change >= 0 {
+        println!("+{}", change);
+    } else {
+        println!("{}", change);
+    }
+
+    return change;
 }
 
 pub fn play_hand(
@@ -149,9 +140,9 @@ pub fn play_hand(
                 // Add another card to the player's hand
                 let card = deck.draw_card();
                 hand.add_card(card);
-                println!("You draw {}", card);
                 player_hand_pts = hand.calculate_points(false);
                 let best_player_hand_value = player_hand_pts.calculate_best_value();
+                println!("You draw {} ({})", card, best_player_hand_value);
                 if best_player_hand_value > 21 {
                     println!("Bust!");
                     return HandResult::Bust;
@@ -163,9 +154,9 @@ pub fn play_hand(
             Move::DoubleDown => {
                 let card = deck.draw_card();
                 hand.add_card(card);
-                println!("You draw {}", card);
                 player_hand_pts = hand.calculate_points(false);
                 let best_player_hand_value = player_hand_pts.calculate_best_value();
+                println!("You draw {} ({})", card, best_player_hand_value);
                 if best_player_hand_value > 21 {
                     println!("Bust!");
                     return HandResult::Bust;
@@ -214,4 +205,18 @@ fn read_input() -> char {
         input.pop();
     }
     input.pop().expect("No text was entered")
+}
+
+fn read_num() -> i32 {
+    loop {
+        let mut input = String::new();
+        let _ = stdout().flush();
+        stdin().read_line(&mut input).expect("Error reading in string input");
+        let res = input.trim().parse::<i32>();
+        if res.is_ok() {
+            return res.unwrap();
+        }
+
+        println!("Invalid!");
+    }
 }
