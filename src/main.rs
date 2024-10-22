@@ -48,17 +48,16 @@ fn play_turn(deck: &mut Deck, credits_per: i32) -> i32 {
     while hands.len() > 0 {
         let hand = hands.pop_front().expect("Error: no hand in the queue");
         let result = play_hand(deck, hand, &dealer_hand);
-        match result {
-            HandResult::Split(num) => {
-                let mut h1 = Hand::new();
-                let mut h2 = Hand::new();
-                h1.add_card(num);
-                h2.add_card(num);
-                hands.push_back(h1);
-                hands.push_back(h2);
-            },
-            _ => hand_results.push_front(result),
-        };
+        if let HandResult::Split(num) = result {
+            let mut h1 = Hand::new();
+            let mut h2 = Hand::new();
+            h1.add_card(num);
+            h2.add_card(num);
+            hands.push_back(h1);
+            hands.push_back(h2);
+        } else {
+            hand_results.push_front(result);
+        }
     }
 
     // Now the dealer's time to do something
