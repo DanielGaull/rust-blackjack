@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 use rand::thread_rng;
@@ -18,6 +19,26 @@ pub enum Card {
     Jack = 10,
     Queen = 11,
     King = 12,
+}
+
+impl Display for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Card::Ace => "A",
+            Card::Two => "2",
+            Card::Three => "3",
+            Card::Four => "4",
+            Card::Five => "5",
+            Card::Six => "6",
+            Card::Seven => "7",
+            Card::Eight => "8",
+            Card::Nine => "9",
+            Card::Ten => "10",
+            Card::Jack => "J",
+            Card::Queen => "Q",
+            Card::King => "K",
+        })
+    }
 }
 
 pub struct Deck {
@@ -209,6 +230,14 @@ impl Points {
                 self.op2
             }
         }
+    }
+
+    pub fn is_soft_17(&self) -> bool {
+        let value = self.calculate_best_value();
+        if value < 17 || (value == 17 && self.has_op2) {
+            return true;
+        }
+        return false;
     }
 }
 

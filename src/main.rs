@@ -13,6 +13,7 @@ fn main() {
     println!("You have 10 hands. Each win grants you 1 hand, while a loss loses you 1 hand");
     println!("If you lose all hands, you lose");
     loop {
+        println!("\n\n\n");
         let points = play_turn(&mut deck);
         user_points += points;
         if user_points <= 0 {
@@ -41,7 +42,7 @@ fn play_turn(deck: &mut Deck) -> i32 {
 
     let player_hand_pts = player_hand.calculate_points(false);
     // Used to check if dealer has blackjack
-    let true_dealer_hand_pts = dealer_hand.calculate_points(false);
+    let mut true_dealer_hand_pts = dealer_hand.calculate_points(false);
 
     if true_dealer_hand_pts.calculate_best_value() == 21 && player_hand_pts.calculate_best_value() != 21 {
         println!("Dealer blackjack!");
@@ -49,7 +50,7 @@ fn play_turn(deck: &mut Deck) -> i32 {
     }
     if player_hand_pts.calculate_best_value() == 21 {
         // Already checked for dealer blackjack
-        println!("Blackjack!");
+        println!("You got Blackjack!");
         return 1;
     }
 
@@ -72,9 +73,57 @@ fn play_turn(deck: &mut Deck) -> i32 {
         };
     }
 
-    
+    // Now the dealer's time to do something
+    // Hit on soft 17
+    while true_dealer_hand_pts.is_soft_17() {
+        dealer_hand.add_card(deck.draw_card());
+        true_dealer_hand_pts = dealer_hand.calculate_points(false);
+    }
 
-    return 0;
+    // Print out dealer hand
+    let mut dealer_bust = false;
+    let dealer_pts = true_dealer_hand_pts.calculate_best_value();
+    println!("Dealer's hand: {} ({})", dealer_hand.to_string(false), true_dealer_hand_pts.to_string());
+    if dealer_pts > 21 {
+        println!("Dealer bust!");
+        dealer_bust = true;
+    }
+
+    let mut num_credits = 0;
+    for result in hand_results {
+        match result {
+            HandResult::Bust => {
+                println!("Bust");
+                num_credits -= 1;
+            },
+            HandResult::DoubleDown(pts) => {
+                if dealer_bust || pts.calculate_best_value() > dealer_pts {
+                    println!("Win double");
+                    num_credits += 2;
+                } else if !dealer_bust && pts.calculate_best_value() == dealer_pts {
+                    println!("Push (on double)");
+                } else {
+                    println!("Lose double");
+                    num_credits -= 2;
+                }
+            },
+            HandResult::Points(pts) => {
+                if dealer_bust || pts.calculate_best_value() > dealer_pts {
+                    println!("Win");
+                    num_credits += 1;
+                } else if !dealer_bust && pts.calculate_best_value() == dealer_pts {
+                    println!("Push");
+                } else {
+                    println!("Lose");
+                    num_credits -= 1;
+                }
+            },
+            // Should never get a split here
+            _ => panic!("Invalid hand result!"),
+        }
+    }
+
+    return num_credits;
 }
 
 pub fn play_hand(
@@ -92,7 +141,9 @@ pub fn play_hand(
         match mov {
             Move::Hit => {
                 // Add another card to the player's hand
-                hand.add_card(deck.draw_card());
+                let card = deck.draw_card();
+                hand.add_card(card);
+                println!("You draw {}", card);
                 player_hand_pts = hand.calculate_points(false);
                 let best_player_hand_value = player_hand_pts.calculate_best_value();
                 if best_player_hand_value > 21 {
@@ -104,7 +155,9 @@ pub fn play_hand(
                 return HandResult::Points(player_hand_pts);
             },
             Move::DoubleDown => {
-                hand.add_card(deck.draw_card());
+                let card = deck.draw_card();
+                hand.add_card(card);
+                println!("You draw {}", card);
                 player_hand_pts = hand.calculate_points(false);
                 let best_player_hand_value = player_hand_pts.calculate_best_value();
                 if best_player_hand_value > 21 {
