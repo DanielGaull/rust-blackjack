@@ -53,23 +53,34 @@ fn play_turn(deck: &mut Deck) -> i32 {
         return 1;
     }
 
-    let mut hands = VecDeque::<&mut Hand>::new();
+    let mut hands = VecDeque::<Hand>::new();
     let mut hand_results = VecDeque::<HandResult>::new();
-    hands.push_front(&mut player_hand);
+    hands.push_front(player_hand);
     while hands.len() > 0 {
         let hand = hands.pop_front().expect("Error: no hand in the queue");
-        play_hand(deck, hand, &dealer_hand, &hands, &hand_results);
+        let result = play_hand(deck, hand, &dealer_hand);
+        match result {
+            HandResult::Split(num) => {
+                let mut h1 = Hand::new();
+                let mut h2 = Hand::new();
+                h1.add_card(num);
+                h2.add_card(num);
+                hands.push_back(h1);
+                hands.push_back(h2);
+            },
+            _ => hand_results.push_front(result),
+        };
     }
+
+    
 
     return 0;
 }
 
 pub fn play_hand(
     deck: &mut Deck,
-    hand: &mut Hand,
+    mut hand: Hand,
     dealer_hand: &Hand,
-    hands: &VecDeque<&mut Hand>,
-    hand_results: &VecDeque<HandResult>,
 ) -> HandResult {
     let dealer_hand_pts = dealer_hand.calculate_points(true);
     loop {
